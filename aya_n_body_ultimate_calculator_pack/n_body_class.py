@@ -3,6 +3,11 @@ import os
 import random as rand
 import vpython
 from vpython import *
+import time
+## Todo notes:
+
+# 1. non complete random initial conditions
+# 2. randomized body color
 
 
 class n_body_system():
@@ -61,12 +66,14 @@ class n_body_system():
         p_k = None
         dpdt_k = None
 
-
         ###### Initialize vpython bodies
         self.vpython_body_list = []
         for i in range(self.n):
-            initialize_body = vpython.sphere(color = color.green, radius = 0.3, make_trail = True, retain=40)
+            initialize_body = vpython.sphere(color = generate_random_color_vector(), radius = 0.3, make_trail = True, retain=40)
             self.vpython_body_list.append(initialize_body)
+        ###### Vpython settings
+        scene.autoscale = True
+        scene.center = vector(0,0,0)
 
         ###### Starting the simulation
         p_k = self.p_0 
@@ -76,7 +83,7 @@ class n_body_system():
             if endless_simulation == False:
                 self.kill_the_kernel_countdown()
             ###### 1. Calculate 1~100 step
-            for i in range(100):
+            for i in range(1):
                 # print(p_k)
                 p_k_plus_1, dpdt_k_plus_1 = euler_s_method_one_step(dt, p_k, dpdt_k, self.G, self.mass_vector)
                 p_k = p_k_plus_1
@@ -93,11 +100,12 @@ class n_body_system():
                 p_solution_list_k_plus_1.append(p_i / (10**self.distance_order_of_magnitude))
                 # dpdt_solution_list_k_plus_1.append(dpdt_i / self.velocity_order_of_magnitude)
             ###### 2. Update the visualization
-            rate(60)
+            rate(30)
             # print(p_solution_list_k_plus_1)
             for i in range(self.n):
                 self.vpython_body_list[i].pos = vector(p_solution_list_k_plus_1[i][0], p_solution_list_k_plus_1[i][1], p_solution_list_k_plus_1[i][2])
             ###### 3. Check if all the body is out of bound, teleportations
+            # p_k = boundary_teleportation(p_k, sky_box_size = 10**self.distance_order_of_magnitude)
             ###### 4. Log the solutions as initial conditions
 
 def euler_s_method_one_step(dt, initial_p, initial_dpdt, G, mass_vector):
@@ -111,13 +119,24 @@ def euler_s_method_one_step(dt, initial_p, initial_dpdt, G, mass_vector):
     dpdt_k_plus_1 = dpdt_k + dt * G * F_dir_matrix_k.dot(mass_vector)
     return p_k_plus_1, dpdt_k_plus_1
 
-def boundary_teleportation(p, sky_box_size):
-    ### If the body left the preset region, teleport it to the other side of the boundary without changing the velocity vector
-    revized_p = None # Check if p is out of the bound, return p if not, return revized_p if does
+def boundary_teleportation(p, dpdt,  sky_box_size=2e10):
+    teleportation_distance = 1e9
+    revized_p = p
+    # sign_array = np.sign(revized_p)
+    magnitude_array = np.fabs(revized_p)
+    print(f'bef: {revized_p}')
+
+    ### If the body left the preset region, teleport it to the other side of the boundary(with some distance off set) without changing the velocity vector
+    for i in range(len(revized_p)):
+        if magnitude_array[i] > sky_box_size:
+            # revized_p[i] = 1. * (magnitude_array[i] - teleportation_distance)
+            revized_p[i] = 1. * sky_box_size
+    print(f'aft: {revized_p}')
+
+    # print('eeping')
+    # time.sleep(1)
     return revized_p
 
 
-
-
-
-
+def generate_random_color_vector():
+    return vector(rand.random(), rand.random(), rand.random())

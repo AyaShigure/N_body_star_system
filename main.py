@@ -4,7 +4,7 @@ from aya_n_body_ultimate_calculator_pack.n_body_class import *
 # from aya_n_body_ultimate_calculator_pack.vpython_script_generator import *
 
 
-three_body_system = n_body_system(5)
+three_body_system = n_body_system(6)
 
 three_body_system.generate_initial_conditions()
-three_body_system.engage_vpython_visualization(dt=100)
+three_body_system.engage_vpython_visualization(dt=1000)
