@@ -18,17 +18,13 @@ class n_body_system():
         ##### Initial conditions
         self.mass_order_of_magnitude = 30
         self.distance_order_of_magnitude = 10
-        self.velocity_order_of_magnitude = 4
+        self.velocity_order_of_magnitude = 5
         self.p_0 = None
         self.dpdt_0 = None
         self.mass_vector = None
         self.initial_condition_is_set_flag = False
         ##### Sky box size
         self.sky_box_size = 10 * self.distance_order_of_magnitude
-
-        ##### Max simulation steps
-        self.kill_counter = 0
-        self.max_simulation_count = 100
 
     def kill_the_kernel_countdown(self):
         self.kill_counter +=1
@@ -55,8 +51,10 @@ class n_body_system():
                 self.dpdt_0[3*i + k] = (2 * rand.random() - 1.0) * 10 ** self.velocity_order_of_magnitude
         self.initial_condition_is_set_flag = True
 
-    def engage_vpython_visualization(self, dt=10, endless_simulation=False):
+    def engage_vpython_visualization(self,  dt=100, endless_simulation=False, max_simulation_count=100):
         ##### Break condition
+        self.kill_counter = 0
+        self.max_simulation_count = max_simulation_count  # Default 100
         if self.initial_condition_is_set_flag == False:
             print('Initial conditions are not defined, exiting')
             os._exit(0)
@@ -69,7 +67,7 @@ class n_body_system():
         ###### Initialize vpython bodies
         self.vpython_body_list = []
         for i in range(self.n):
-            initialize_body = vpython.sphere(color = generate_random_color_vector(), radius = 0.3, make_trail = True, retain=40)
+            initialize_body = vpython.sphere(color = generate_random_color_vector(), radius = 0.03, make_trail = True, retain=40)
             self.vpython_body_list.append(initialize_body)
         ###### Vpython settings
         scene.autoscale = True
@@ -80,6 +78,7 @@ class n_body_system():
         dpdt_k = self.dpdt_0 
         print(f'Starting the simulation, dt = {dt}')
         while(1):
+            # time.sleep(0.1)
             if endless_simulation == False:
                 self.kill_the_kernel_countdown()
             ###### 1. Calculate 1~100 step
