@@ -6,9 +6,17 @@ from vpython import *
 import time
 ## Todo notes:
 
-# 1. non complete random initial conditions
-# 2. randomized body color
+# 1. non complete random initial conditions (DONE)
+# 2. randomized body color(DONE)
+# 3. body mass not all at the same order of magnitude (so they dont sling shot that easily)
+# 4.1 initial positions on a plane, evenly spaced (DONE)
+# 4. initial velocities pointing towards to (0,0,0) (initial velocity)
+# 5. 0 initial velocities but put the bodies closer?
 
+# 6. Known solutions(initial conditions) to n=3 problems
+
+def generate_random_color_vector():
+    return vector(rand.random(), rand.random(), rand.random())
 
 class n_body_system():
     def __init__(self, n):
@@ -17,14 +25,14 @@ class n_body_system():
 
         ##### Initial conditions
         self.mass_order_of_magnitude = 30
-        self.distance_order_of_magnitude = 10
-        self.velocity_order_of_magnitude = 5
+        self.distance_order_of_magnitude = 9
+        self.velocity_order_of_magnitude = 5.4
         self.p_0 = None
         self.dpdt_0 = None
         self.mass_vector = None
         self.initial_condition_is_set_flag = False
-        ##### Sky box size
-        self.sky_box_size = 10 * self.distance_order_of_magnitude
+        ##### Vpython settings
+        self.body_radius = 0.3 # Default
 
     def kill_the_kernel_countdown(self):
         self.kill_counter +=1
@@ -33,23 +41,6 @@ class n_body_system():
             os._exit(0)
         else:
             print(f'Current simulation step: [{self.kill_counter}/{self.max_simulation_count}]')
-
-    def generate_initial_conditions(self):
-        ##### Random mass vector
-        self.mass_vector = np.zeros([self.n,1])
-        for i in range(self.n):
-            self.mass_vector[i] = rand.randint(1,9) * 10 ** self.mass_order_of_magnitude
-        ##### Random initial position
-        self.p_0 = np.zeros([3 * self.n,1])
-        for i in range(self.n):
-            for k in range(3):
-                self.p_0[3*i + k] = (2 * rand.random() - 1.0) * 10 **  self.distance_order_of_magnitude
-        ##### Random initial velocity
-        self.dpdt_0 = np.zeros([3 * self.n,1])
-        for i in range(self.n):
-            for k in range(3):
-                self.dpdt_0[3*i + k] = (2 * rand.random() - 1.0) * 10 ** self.velocity_order_of_magnitude
-        self.initial_condition_is_set_flag = True
 
     def engage_vpython_visualization(self,  dt=100, endless_simulation=False, max_simulation_count=100):
         ##### Break condition
@@ -67,7 +58,7 @@ class n_body_system():
         ###### Initialize vpython bodies
         self.vpython_body_list = []
         for i in range(self.n):
-            initialize_body = vpython.sphere(color = generate_random_color_vector(), radius = 0.03, make_trail = True, retain=40)
+            initialize_body = vpython.sphere(color = generate_random_color_vector(), radius = self.body_radius, make_trail = True, retain=800)
             self.vpython_body_list.append(initialize_body)
         ###### Vpython settings
         scene.autoscale = True
@@ -81,6 +72,9 @@ class n_body_system():
             # time.sleep(0.1)
             if endless_simulation == False:
                 self.kill_the_kernel_countdown()
+            else:
+                self.kill_counter += 1
+                print(f'Current simulation step: [{self.kill_counter}/inf]')
             ###### 1. Calculate 1~100 step
             for i in range(1):
                 # print(p_k)
@@ -107,35 +101,91 @@ class n_body_system():
             # p_k = boundary_teleportation(p_k, sky_box_size = 10**self.distance_order_of_magnitude)
             ###### 4. Log the solutions as initial conditions
 
-def euler_s_method_one_step(dt, initial_p, initial_dpdt, G, mass_vector):
-    ##### p_k
-    p_k = initial_p
-    dpdt_k = initial_dpdt
-    ##### F_dir at time k
-    F_dir_matrix_k = update_gravtational_interaction_matrix(p_k) 
-    ##### Euler's method for k+1
-    p_k_plus_1 = p_k + dt * dpdt_k
-    dpdt_k_plus_1 = dpdt_k + dt * G * F_dir_matrix_k.dot(mass_vector)
-    return p_k_plus_1, dpdt_k_plus_1
 
-def boundary_teleportation(p, dpdt,  sky_box_size=2e10):
-    teleportation_distance = 1e9
-    revized_p = p
-    # sign_array = np.sign(revized_p)
-    magnitude_array = np.fabs(revized_p)
-    print(f'bef: {revized_p}')
+    def generate_neat_symmetric_initial_conditions(self):
+        '''
+            1) same mass
+            2) xy plane initial position, Rz rotated, with no z direction conponents
+            3) xy plane initial velocities, Rz rotated, with some z direction noise
+        '''
+        ##### Random mass vector with different mass magnitudes
+        self.mass_vector = np.zeros([self.n,1])
+        for i in range(self.n):
+            # self.mass_vector[i] = rand.randint(1,9) * 10 ** self.mass_order_of_magnitude 
+            self.mass_vector[i] = 1. * 10 ** self.mass_order_of_magnitude 
 
-    ### If the body left the preset region, teleport it to the other side of the boundary(with some distance off set) without changing the velocity vector
-    for i in range(len(revized_p)):
-        if magnitude_array[i] > sky_box_size:
-            # revized_p[i] = 1. * (magnitude_array[i] - teleportation_distance)
-            revized_p[i] = 1. * sky_box_size
-    print(f'aft: {revized_p}')
+        ##### Random initial position with different order of magnitude
+        self.p_0 = np.zeros([3 * self.n,1])
+        Rz_rotation_angle = 2 * np.pi/self.n
+        for i in range(self.n):
+            body_initial_position = Rz(Rz_rotation_angle * i).dot(np.array([1 * 10 ** self.distance_order_of_magnitude, 0.0, 0.0]))
+            self.p_0[3*i + 0] = body_initial_position.T[0].item()
+            self.p_0[3*i + 1] = body_initial_position.T[1].item()
+        ##### Random initial velocity 1)pointing roughly to the spacial [0,0,0] 2)different order of magnitude
+        self.dpdt_0 = np.zeros([3 * self.n,1])
+        for i in range(self.n):
+            body_initial_velocity = Rz(Rz_rotation_angle * i).dot(np.array([0.0, 1 * 10 ** self.velocity_order_of_magnitude, 0.0]))
+            self.dpdt_0[3*i + 0] = body_initial_velocity.T[0].item()
+            self.dpdt_0[3*i + 1] = body_initial_velocity.T[1].item()
+            self.dpdt_0[3*i + 2] = (2 * rand.random() - 1.0) * 10 ** 1
+        self.initial_condition_is_set_flag = True    
 
-    # print('eeping')
-    # time.sleep(1)
-    return revized_p
+
+    def generate_better_initial_conditions_0_velocities(self):
+        ##### Random mass vector with different mass magnitudes
+        self.mass_vector = np.zeros([self.n,1])
+        for i in range(self.n):
+            self.mass_vector[i] = rand.randint(1,9) * 10 ** self.mass_order_of_magnitude
+        ##### Random initial position with different order of magnitude
+        self.p_0 = np.zeros([3 * self.n,1])
+        for i in range(self.n):
+            for k in range(3):
+                self.p_0[3*i + k] = (2 * rand.random() - 1.0) * 10 ** self.distance_order_of_magnitude
+        ##### Random initial velocity 1)pointing roughly to the spacial [0,0,0] 2)different order of magnitude
+        self.dpdt_0 = np.zeros([3 * self.n,1])
+        # for i in range(self.n):
+        #     for k in range(3):
+        #         self.dpdt_0[3*i + k] = sign_array[3*i + k] * rand.random() * 10 ** rand.randint(self.velocity_order_of_magnitude-3, self.velocity_order_of_magnitude)
+        self.initial_condition_is_set_flag = True    
 
 
-def generate_random_color_vector():
-    return vector(rand.random(), rand.random(), rand.random())
+    def generate_better_initial_conditions(self):
+        
+        ##### Random mass vector with different mass magnitudes
+        self.mass_vector = np.zeros([self.n,1])
+        for i in range(self.n):
+            self.mass_vector[i] = rand.randint(1,9) * 10 ** rand.randint(self.mass_order_of_magnitude - 3, self.mass_order_of_magnitude)
+        ##### Random initial position with different order of magnitude
+        self.p_0 = np.zeros([3 * self.n,1])
+        for i in range(self.n):
+            for k in range(3):
+                self.p_0[3*i + k] = (2 * rand.random() - 1.0) * 10 **  rand.randint(self.distance_order_of_magnitude - 6, self.distance_order_of_magnitude)
+        ##### Random initial velocity 1)pointing roughly to the spacial [0,0,0] 2)different order of magnitude
+        self.dpdt_0 = np.zeros([3 * self.n,1])
+        sign_array = -1 * np.sign(self.p_0)
+        for i in range(self.n):
+            for k in range(3):
+                self.dpdt_0[3*i + k] = sign_array[3*i + k] * rand.random() * 10 ** rand.randint(self.velocity_order_of_magnitude-3, self.velocity_order_of_magnitude)
+        self.initial_condition_is_set_flag = True                
+
+    def generate_random_initial_conditions(self):
+        '''
+            Completely random initial position and velocities
+        '''
+        ##### Random mass vector
+        self.mass_vector = np.zeros([self.n,1])
+        for i in range(self.n):
+            self.mass_vector[i] = rand.randint(1,9) * 10 ** self.mass_order_of_magnitude
+        ##### Random initial position
+        self.p_0 = np.zeros([3 * self.n,1])
+        for i in range(self.n):
+            for k in range(3):
+                self.p_0[3*i + k] = (2 * rand.random() - 1.0) * 10 **  self.distance_order_of_magnitude
+        ##### Random initial velocity
+        self.dpdt_0 = np.zeros([3 * self.n,1])
+        for i in range(self.n):
+            for k in range(3):
+                self.dpdt_0[3*i + k] = (2 * rand.random() - 1.0) * 10 ** self.velocity_order_of_magnitude
+        self.initial_condition_is_set_flag = True
+
+

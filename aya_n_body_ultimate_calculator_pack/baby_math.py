@@ -1,6 +1,7 @@
 # Baby math and other utility functions
 import numpy as np
 from tqdm import tqdm
+
 def Rx(theta):
   return np.matrix([[ 1, 0           , 0           ],
                    [ 0, np.cos(theta),-np.sin(theta)],
@@ -42,9 +43,19 @@ def update_gravtational_interaction_matrix(p):
                 pass 
     return F_dir
 
+def euler_s_method_one_step(dt, initial_p, initial_dpdt, G, mass_vector):
+    ##### p_k
+    p_k = initial_p
+    dpdt_k = initial_dpdt
+    ##### F_dir at time k
+    F_dir_matrix_k = update_gravtational_interaction_matrix(p_k) 
+    ##### Euler's method for k+1
+    p_k_plus_1 = p_k + dt * dpdt_k
+    dpdt_k_plus_1 = dpdt_k + dt * G * F_dir_matrix_k.dot(mass_vector)
+    return p_k_plus_1, dpdt_k_plus_1
 
 
-# Euler's method, integration from start till the end, only for referencing
+# Euler's method, integration from start till the end, only for code referencing
 def i_will_return_the_rough_n_body_problem_solution_for_im_using_the_eulers_method(dt, simulation_steps, initial_p, initial_dpdt, mass_vector):
 
     # Log the initial conditions
