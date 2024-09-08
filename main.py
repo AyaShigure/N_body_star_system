@@ -7,12 +7,14 @@ simulation_mode = 0 # 0: Manual mode, >1: Load known solution
 if __name__ == '__main__':
     ##### Mode 0:  Manual initial conditions 
     if simulation_mode == 0:
-        multibody_system = n_body_system(10)
+        multibody_system = n_body_system(150)
         multibody_system.mass_order_of_magnitude = 30
         multibody_system.distance_order_of_magnitude = 10
-        multibody_system.velocity_order_of_magnitude = 5
-        multibody_system.body_radius = 0.03
-        multibody_system.generate_neat_symmetric_initial_conditions()
+        multibody_system.velocity_order_of_magnitude = 5.5
+        multibody_system.body_radius = 0.01
+        # multibody_system.generate_neat_symmetric_initial_conditions()
+        multibody_system.generate_random_initial_conditions()
+
 
     ##### Mode >1: Known solutions from solution_sets.py
     elif simulation_mode == 1:
@@ -21,6 +23,8 @@ if __name__ == '__main__':
         multibody_system = solution_2()
     elif simulation_mode == 3:
         multibody_system = solution_3()
+    elif simulation_mode == 4:
+        multibody_system = solution_4()
 
     ##### Mode WAT????????
     else:
@@ -28,7 +32,7 @@ if __name__ == '__main__':
         os._exit(0)
 
     ###### Simulation settings
-    dt = 300 # simulation step size
+    dt = 500 # simulation step size
     max_simulation_count = 300 # max sim count
     endless_simulation = True # go forever?
 
