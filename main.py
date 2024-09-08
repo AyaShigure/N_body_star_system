@@ -7,14 +7,15 @@ simulation_mode = 0 # 0: Manual mode, >1: Load known solution
 if __name__ == '__main__':
     ##### Mode 0:  Manual initial conditions 
     if simulation_mode == 0:
-        multibody_system = n_body_system(150)
+        multibody_system = n_body_system(100)
         multibody_system.mass_order_of_magnitude = 30
         multibody_system.distance_order_of_magnitude = 10
         multibody_system.velocity_order_of_magnitude = 5.5
         multibody_system.body_radius = 0.01
+        
+        ##### Initial condition generators
         # multibody_system.generate_neat_symmetric_initial_conditions()
         multibody_system.generate_random_initial_conditions()
-
 
     ##### Mode >1: Known solutions from solution_sets.py
     elif simulation_mode == 1:
