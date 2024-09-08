@@ -75,7 +75,7 @@ class n_body_system():
             else:
                 self.kill_counter += 1
                 print(f'Current simulation step: [{self.kill_counter}/inf]')
-            ###### 1. Calculate 1~100 step
+            ###### 1. Calculate every some steps.
             for i in range(1):
                 # print(p_k)
                 p_k_plus_1, dpdt_k_plus_1 = euler_s_method_one_step(dt, p_k, dpdt_k, self.G, self.mass_vector)

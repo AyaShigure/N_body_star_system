@@ -56,7 +56,7 @@ def euler_s_method_one_step(dt, initial_p, initial_dpdt, G, mass_vector):
 
 
 # Euler's method, integration from start till the end, only for code referencing
-def i_will_return_the_rough_n_body_problem_solution_for_im_using_the_eulers_method(dt, simulation_steps, initial_p, initial_dpdt, mass_vector):
+def i_will_return_the_rough_n_body_problem_solution_for_im_using_the_eulers_method(dt, simulation_steps, initial_p, G, initial_dpdt, mass_vector):
 
     # Log the initial conditions
     time_stamp = np.ndarray(1)
